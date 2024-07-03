@@ -55,7 +55,9 @@ class ProxyClient:
 
                     return req
                 
-                except requests.RequestException: continue
+                except requests.RequestException: 
+                    if req.status_code == 404: return req
+                    continue
         
         raise requests.RequestException(f"All {self.retries} retries exhausted. Request failed")
 
