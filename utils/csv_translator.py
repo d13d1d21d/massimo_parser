@@ -1,7 +1,7 @@
 
 from collections.abc import Generator
 from deep_translator import GoogleTranslator
-import csv, time
+import csv
 
 class CSVTranslator:
     PREFIX = "rus_"
@@ -19,7 +19,9 @@ class CSVTranslator:
         self.sep = sep
         
         self.file = file
-        self.csv_reader = csv.DictReader(open(file, "r", encoding="utf-8"), delimiter=";")
+
+        self.csv_reader_f = open(file, "r", encoding="utf-8")
+        self.csv_reader = csv.DictReader(self.csv_reader_f, delimiter=";")
 
     @property
     def new_fields(self) -> list[str]:
@@ -28,7 +30,10 @@ class CSVTranslator:
 
     def add_new_columns(self, output_file: str) -> None:
         new_fields = self.csv_reader.fieldnames + self.new_fields
-        self.csv_writer = csv.DictWriter(open(output_file, "w", encoding="utf-8", newline=""), new_fields, delimiter=";")
+
+        self.csv_writer_f = open(output_file, "w", encoding="utf-8", newline="")
+        self.csv_writer = csv.DictWriter(self.csv_writer_f, new_fields, delimiter=";")
+
         self.csv_writer.writeheader()
 
     def translate_rows(self) -> Generator[int, None, None]:
@@ -53,3 +58,7 @@ class CSVTranslator:
 
                     bundle = []; bundle.append(row)
                     yield processed_rows
+
+    def close_files(self) -> None:
+        self.csv_reader_f.close()
+        self.csv_writer_f.close()

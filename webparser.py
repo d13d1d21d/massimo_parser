@@ -63,7 +63,7 @@ class Parser:
                 fabric = {}
                 if composition := color.get("compositionDetail"):
                     fabric = get_fabric(composition.get("parts"))
-
+                
                 images = []
                 if xmedia := next((i for i in product_summary.get("xmedia", []) if i.get("colorCode") == color_id), None):
                     media_path = "https://static.massimodutti.net/3/photos" + get_media_path(color.get("image").get("url"))
@@ -88,7 +88,7 @@ class Parser:
                                     url,
                                     sku,
                                     season_sku,
-                                    spu,
+                                    spu + f"-{ref[1]}",
                                     name,
                                     brand,
                                     category,
