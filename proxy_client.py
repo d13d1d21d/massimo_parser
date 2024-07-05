@@ -22,6 +22,8 @@ class ProxyClient:
         self.retries = retries
         self.timeout = timeout
 
+        self.retry = self.retry_p if self.proxies else self.retry_r
+
     @staticmethod
     def proxy_request(method: str, url: str, proxy: ProxyData, **kwargs) -> requests.Response:
         return requests.request(
@@ -32,31 +34,53 @@ class ProxyClient:
         )
     
     @debug("{method} {url} - все попытки получить успешный ответ от сервера исчерпаны")
-    def retry(
+    def retry_r(
         self,
         method: str,
         url: str,
         **kwargs
     ) -> requests.Response | None:
+        headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0" }
+
+        for _ in range(self.retries):
+            try:
+                req = requests.request(method, url, headers=headers, **kwargs)
+                logger.log(LogType.INFO, f"{method} {url} - {req.status_code}")
+                    
+                if req.status_code not in [200, 404]: req.raise_for_status()
+                return req
+            
+            except requests.RequestException:
+                logger.log(LogType.INFO, f"Не удалось выполнить запрос {method} {url}")
+                continue
+
+        raise requests.RequestException(f"All {self.retries} retries exhausted. Request failed")
+
+    @debug("{method} {url} - все попытки получить успешный ответ от сервера исчерпаны")
+    def retry_p(
+        self,
+        method: str,
+        url: str,
+        **kwargs
+    ) -> requests.Response | None:
+        headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0" }
+
         for _ in range(self.retries):
             all_proxies = list(self.proxies)
-
+            
             while all_proxies:
                 random.shuffle(all_proxies)
                 proxy = all_proxies.pop()
 
                 try:
-                    headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0" }
-
                     req = self.proxy_request(method, url, proxy, headers=headers, timeout=self.timeout, **kwargs)
-                    logger.log(LogType.INFO, f"{method} {url} - {req.status_code}. Proxy: {proxy}")
+                    logger.log(LogType.INFO, f"{method} {url} - {req.status_code}. Proxy: {proxy.proxy}")
                     
-                    req.raise_for_status()
-
+                    if req.status_code not in [200, 404]: req.raise_for_status()
                     return req
                 
-                except requests.RequestException: 
-                    if req.status_code == 404: return req
+                except requests.RequestException:
+                    logger.log(LogType.INFO, f"Не удалось выполнить запрос {method} {url}, используя прокси {proxy.proxy}")
                     continue
         
         raise requests.RequestException(f"All {self.retries} retries exhausted. Request failed")
@@ -64,7 +88,10 @@ class ProxyClient:
 
             
 def map_proxies(protocol: str, proxies: list[str]) -> list[ProxyData]:
-    return [
-        ProxyData(protocol, i) 
-        for i in proxies
-    ]
+    if any(proxies):
+        return [
+            ProxyData(protocol, i) 
+            for i in proxies
+        ]
+
+    return []

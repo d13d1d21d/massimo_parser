@@ -15,7 +15,6 @@ insert_headers = [True, True]
 if platform.system() == "Windows":
     just_fix_windows_console()
 
-parsed_products = [1,2]
 def stop_script() -> None:
     print(f"[{Fore.RED + Style.BRIGHT}X{Style.RESET_ALL}] Не указан магазин для парсинга\nЗапуск: {Style.BRIGHT}python main.py <tr | de>{Style.RESET_ALL}")
     time.sleep(5)
@@ -44,6 +43,8 @@ proxy_client = ProxyClient(
     map_proxies("http", open("proxy_list.txt").read().split("\n")),
     retries=5
 )
+if not proxy_client.proxies: print(f"[{Fore.CYAN + Style.BRIGHT}i{Style.RESET_ALL}] proxy_list.txt пуст. Используется режим без прокси\n")
+
 parser = Parser(proxy_client)
 logger.log_new_run()
 

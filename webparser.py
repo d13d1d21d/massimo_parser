@@ -12,8 +12,8 @@ class Parser:
     @debug("Ошибка в получении категорий для {shop.store_id} {shop.country}. Данные об ошибке занесены в логи", True)
     def get_categories(self, shop: Store) -> list[Category]:
         categories = self.proxy_client.retry("GET", self.BASE + f"/2/catalog/store/{shop.store_id}/category?languageId=-1&typeCatalog=1&appId=1").json().get("categories")
-        women_collection = next((i for i in categories[0].get("subcategories") if i.get("nameEn") == "COLLECTION"), None).get("subcategories")
-        men_collection = next((i for i in categories[1].get("subcategories") if i.get("nameEn") == "COLLECTION"), None).get("subcategories")
+        women_collection = next((i for i in categories[0].get("subcategories") if "COLLECTION" in i.get("nameEn")), None).get("subcategories")
+        men_collection = next((i for i in categories[1].get("subcategories") if "COLLECTION" in i.get("nameEn")), None).get("subcategories")
         
         women_categories = list(Category(shop, "women " + i.get("nameEn").lower(), i.get("id")) for i in women_collection if i.get("categoryUrl"))
         men_categories = list(Category(shop, "men " + i.get("nameEn").lower(), i.get("id")) for i in men_collection if i.get("categoryUrl"))
