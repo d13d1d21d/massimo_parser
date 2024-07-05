@@ -109,8 +109,6 @@ if parsed_products:
             translated_rows = new_1000
             print(f"Переведено {i} строк")
 
-            break
-
     translator.close_files()
     os.remove(f"output/massimodutti{file_suffix}-products.csv")
     os.rename(f"output/massimodutti{file_suffix}-products.temp", f"output/massimodutti{file_suffix}-products.csv")
